@@ -1,57 +1,33 @@
-import { graphql } from "@octokit/graphql";
 import { useState, useEffect } from "react";
-
-async function getRepo() {
-  const token = process.env.REACT_APP_GITHUB_TOKEN;
-  const graphqlWithAuth = graphql.defaults({
-    headers: {
-      authorization: `token ${token}`,
-    },
-  });
-
-  const { repository } = await graphqlWithAuth(`{
-    repository(owner: "codestates-seb", name: "agora-states-fe") {
-      discussions(first: 10) {
-        edges {
-          node {
-            id
-            createdAt
-            title
-            url
-            bodyText
-            createdAt
-            id
-            author {
-              avatarUrl
-              login
-            }
-            answer {
-              author {
-                avatarUrl
-              }
-              bodyText
-              createdAt
-            }
-          }
-        }
-      }
-    },
-  }`);
-
-  return repository;
-}
+import Category from "./components/Category";
+import Discussions from "./components/Discussions";
+import Header from "./components/Header";
+import getRepository from "./getRepository";
 
 function App() {
-  let [repository, setRepository] = useState({});
+  let [discussionObj, setDiscussionObj] = useState({});
+  const { discussionCategories, discussions } = discussionObj;
+
   useEffect(() => {
-    getRepo().then((data) => {
-      setRepository(data);
-    });
+    getRepository()
+      .then((data) => {
+        setDiscussionObj(data);
+      })
+      .catch((err) => console.log(err.response));
   }, []);
 
   return (
     <>
-      <p>Repository data: {JSON.stringify(repository)}</p>
+      <div className="main">
+        <Header />
+        <div className="main__wrapper"></div>
+        <Category category={discussionCategories} />
+        {discussions !== undefined ? (
+          <Discussions discussions={discussions.edges}></Discussions>
+        ) : (
+          <div>Loading...</div>
+        )}
+      </div>
     </>
   );
 }
