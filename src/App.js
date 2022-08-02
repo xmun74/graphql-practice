@@ -1,24 +1,58 @@
-import logo from './logo.svg';
-import './App.css';
+import { graphql } from "@octokit/graphql";
+import { useState, useEffect } from "react";
+
+async function getRepo() {
+  const token = process.env.REACT_APP_GITHUB_TOKEN;
+  const graphqlWithAuth = graphql.defaults({
+    headers: {
+      authorization: `token ${token}`,
+    },
+  });
+
+  const { repository } = await graphqlWithAuth(`{
+    repository(owner: "codestates-seb", name: "agora-states-fe") {
+      discussions(first: 10) {
+        edges {
+          node {
+            id
+            createdAt
+            title
+            url
+            bodyText
+            createdAt
+            id
+            author {
+              avatarUrl
+              login
+            }
+            answer {
+              author {
+                avatarUrl
+              }
+              bodyText
+              createdAt
+            }
+          }
+        }
+      }
+    },
+  }`);
+
+  return repository;
+}
 
 function App() {
+  let [repository, setRepository] = useState({});
+  useEffect(() => {
+    getRepo().then((data) => {
+      setRepository(data);
+    });
+  }, []);
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <>
+      <p>Repository data: {JSON.stringify(repository)}</p>
+    </>
   );
 }
 
